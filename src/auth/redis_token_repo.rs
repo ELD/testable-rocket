@@ -53,7 +53,7 @@ mod tests {
         let token = sut.generate_token().await;
         let username = "username".to_string();
         assert_eq!(None, sut.get_username_by_token(&token).await);
-        assert_eq!(true, sut.save_token(&token, &username).await);
+        assert!(sut.save_token(&token, &username).await);
         assert_eq!(Some(username), sut.get_username_by_token(&token).await);
     }
 }

@@ -68,8 +68,8 @@ mod tests {
             password: "p".to_string(),
         };
 
-        assert_eq!(false, sut.is_credential_exists(&credential).await);
-        assert_eq!(true, sut.save_credential(&credential).await);
-        assert_eq!(true, sut.is_credential_exists(&credential).await);
+        assert!(!sut.is_credential_exists(&credential).await);
+        assert!(sut.save_credential(&credential).await);
+        assert!(sut.is_credential_exists(&credential).await);
     }
 }

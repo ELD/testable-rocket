@@ -12,8 +12,7 @@ sqlx = { version = "0.5.1", default-features = false, features = [ "runtime-toki
 include_dir = "0.6"
 redis = { version = "0.19.0", features = ["tokio-comp"] }
 uuid = { version = "0.8.1", features = [ "v4" ] }
-rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "master" }
-rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", branch = "master" }
+rocket = { version = "0.5.0-rc.1", features = ["secrets", "json"] }
 serde = { version = "1.0", features = [ "derive" ] }
 dotenv = "0.15"
 

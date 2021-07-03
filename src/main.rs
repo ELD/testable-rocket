@@ -1,7 +1,12 @@
 mod auth;
 mod infrastructure;
 
-use auth::{ports::AuthService, rest_auth_controller::configure};
+use auth::{
+    auth_service_impl::AuthServiceImpl, ports::AuthService,
+    postgres_credential_repo::PostgresCredentialRepoImpl, redis_token_repo::RedisTokenRepoImpl,
+    rest_auth_controller::configure,
+};
+use rocket::fairing::AdHoc;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -11,21 +16,27 @@ async fn main() -> Result<(), rocket::error::Error> {
         print!("not applying .env: {:?}", e);
     }
 
-    let pg_pool = Arc::new(infrastructure::postgresql::configure().await);
-    let redis_client = Arc::new(infrastructure::redis::configure().await);
+    rocket::build()
+        .attach(AdHoc::on_ignite("Auth", |rocket| {
+            Box::pin(async move {
+                let pg_pool = Arc::new(infrastructure::postgresql::configure().await);
+                let redis_client = Arc::new(infrastructure::redis::configure().await);
 
-    rocket::ignite()
-        .manage(Box::new(configure_auth(redis_client, pg_pool)) as Box<dyn AuthService>)
+                rocket
+                    .manage(
+                        Box::new(configure_auth(redis_client.clone(), pg_pool.clone()))
+                            as Box<dyn AuthService>,
+                    )
+                    .manage(redis_client)
+                    .manage(pg_pool)
+            })
+        }))
         .mount("/", configure())
         .launch()
         .await
 }
 
 fn configure_auth(redis_client: Arc<redis::Client>, pg_pool: Arc<PgPool>) -> impl AuthService {
-    use crate::auth::{
-        auth_service_impl::AuthServiceImpl, postgres_credential_repo::PostgresCredentialRepoImpl,
-        redis_token_repo::RedisTokenRepoImpl,
-    };
     AuthServiceImpl {
         credential_repo: PostgresCredentialRepoImpl { pg_pool },
         token_repo: RedisTokenRepoImpl { redis_client },
